@@ -558,7 +558,12 @@
     {"name": "Limbic", "ats": "none", "slug": ""},
     {"name": "Notable Health", "ats": "none", "slug": "", "aliases": ["Notable"]},
     {"name": "Regard", "ats": "none", "slug": ""},
-    {"name": "Dolby", "ats": "none", "slug": "", "aliases": ["Dolby Laboratories"]}
+    {"name": "Dolby", "ats": "none", "slug": "", "aliases": ["Dolby Laboratories"]},
+    {"name": "Warner Music Group", "ats": "none", "slug": ""},
+    {"name": "SiriusXM", "ats": "none", "slug": ""},
+    {"name": "iHeartMedia", "ats": "smartrecruiters", "slug": "iheartmedia"},
+    {"name": "Deezer", "ats": "none", "slug": ""},
+    {"name": "Live Nation Entertainment", "ats": "smartrecruiters", "slug": "livenationentertainment", "aliases": ["Live Nation"]}
   ],
   "simplify": {
       "enabled": true,
