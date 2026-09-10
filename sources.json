@@ -320,8 +320,9 @@
     {"name": "Circle Internet Financial", "ats": "none", "slug": "", "aliases": ["Circle"]},
     {"name": "Visa", "ats": "none", "slug": ""},
     {"name": "American Express", "ats": "none", "slug": "", "aliases": ["Amex"]},
+    {"name": "Nike", "ats": "workday", "slug": "", "tenant": "nike", "site": "nke", "dc": "wd1", "queries": ["intern", "new grad"], "max": 850},
     {"name": "Goldman Sachs", "ats": "none", "slug": "", "aliases": ["Goldman"]},
-    {"name": "JPMorgan Chase", "ats": "none", "slug": "", "aliases": ["JPMorgan", "J.P. Morgan", "Chase"]},
+    {"name": "JPMorgan Chase", "ats": "none", "slug": "", "aliases": ["JPMorgan", "J.P. Morgan", "Chase", "JP Morgan Chase", "JP Morgan"]},
     {"name": "Morgan Stanley", "ats": "none", "slug": ""},
     {"name": "Wells Fargo", "ats": "none", "slug": ""},
     {"name": "Fidelity", "ats": "none", "slug": "", "aliases": ["Fidelity Investments"]},
@@ -570,11 +571,16 @@
       "match_target_companies_only": true,
       "level_implied": true,
       "listings": [
-          "https://raw.githubusercontent.com/SimplifyJobs/Summer2026-Internships/dev/.github/scripts/listings.json",
+          "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json",
           "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json",
-          "https://raw.githubusercontent.com/vanshb03/Summer2026-Internships/main/.github/scripts/listings.json",
           "https://raw.githubusercontent.com/vanshb03/Summer2027-Internships/dev/.github/scripts/listings.json",
-          "https://raw.githubusercontent.com/vanshb03/New-Grad-2026/main/.github/scripts/listings.json"
+          "https://raw.githubusercontent.com/vanshb03/New-Grad-2027/dev/.github/scripts/listings.json"
       ]
+  },
+  "intern_tracker": {
+      "enabled": true,
+      "match_target_companies_only": true,
+      "level_implied": true,
+      "url": "https://zshah101.github.io/Automated-List-Of-Summer-2027-and-Fall-2026-Tech-Internships/api/jobs.json"
   }
 }

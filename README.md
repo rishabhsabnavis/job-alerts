@@ -20,7 +20,8 @@ every 30 min (GitHub Actions cron)
       │                   Adobe, Capital One, eBay, …), Eightfold (Netflix)
       │
       ├─ aggregators ───► SimplifyJobs + vanshb03 new-grad / internship
-      │                   listings.json (broad safety net, filtered to my
+      │                   listings.json, plus an independently-scraped
+      │                   intern tracker (broad safety net, filtered to my
       │                   target companies through their name aliases)
       │
       ├─ filter ────────► title must match a ROLE keyword (software engineer,

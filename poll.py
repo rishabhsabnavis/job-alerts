@@ -244,6 +244,29 @@ ADAPTERS = {
 }
 
 
+# Corporate-suffix words aggregator feeds tack onto a company name
+# inconsistently posting-to-posting ("Qualcomm Technologies, Inc." vs the
+# registry's "Qualcomm", "RTX Corporation" vs "RTX"). Stripped iteratively
+# from the end so chained suffixes ("Technologies, Inc.") both come off.
+CORP_SUFFIXES = {
+    "inc", "incorporated", "corp", "corporation", "co", "company",
+    "ltd", "llc", "llp", "plc", "group", "holdings", "technologies",
+    "technology",
+}
+
+
+def normalize_company(name):
+    """Collapse a company name to a loose matching key: lowercase, drop
+    punctuation, strip trailing corporate-suffix words. Used only as a
+    fallback when the exact alias lookup misses, so it only ever widens
+    matches within our own registry rather than replacing precise lookups."""
+    n = re.sub(r"[^a-z0-9 ]", " ", name.lower())
+    words = n.split()
+    while words and words[-1] in CORP_SUFFIXES:
+        words.pop()
+    return " ".join(words)
+
+
 def build_alias_map(companies):
     """Map every alias (and canonical name), lowercased, to the canonical name.
     Lets an aggregator's 'Google' resolve to our 'Google DeepMind'."""
@@ -255,7 +278,18 @@ def build_alias_map(companies):
     return amap
 
 
-def fetch_simplify(cfg, alias_map):
+def build_normalized_alias_map(companies):
+    """Same as build_alias_map but keyed by normalize_company() -- the
+    fallback tier for corporate-suffix/punctuation variants."""
+    namap = {}
+    for c in companies:
+        namap[normalize_company(c["name"])] = c["name"]
+        for a in c.get("aliases", []):
+            namap[normalize_company(a)] = c["name"]
+    return namap
+
+
+def fetch_simplify(cfg, alias_map, norm_alias_map=None):
     """Pull every aggregator listings.json feed, keep only target companies
     (matched through the alias map), de-duped across feeds."""
     out = []
@@ -270,6 +304,8 @@ def fetch_simplify(cfg, alias_map):
                 continue
             raw_name = j.get("company_name", "")
             canonical = alias_map.get(raw_name.lower())
+            if not canonical and norm_alias_map:
+                canonical = norm_alias_map.get(normalize_company(raw_name))
             if cfg.get("match_target_companies_only", True) and not canonical:
                 continue
             out.append({
@@ -285,6 +321,38 @@ def fetch_simplify(cfg, alias_map):
                 # maintainers already vetted as new-grad gets thrown away.
                 "level_implied": cfg.get("level_implied", False),
             })
+    return out
+
+
+def fetch_intern_tracker(cfg, alias_map, norm_alias_map=None):
+    """Pull the zshah101 intern-tracker jobs.json. Unlike the Simplify feeds
+    (community-submitted), this one is independently scraped from ~4.5k
+    employer ATS boards directly, so it is a genuinely separate source rather
+    than another mirror of the same underlying data."""
+    try:
+        data = http_json(cfg["url"])
+    except Exception as e:
+        print(f"  intern-tracker feed failed: {cfg['url']} -> {e}", file=sys.stderr)
+        return []
+    out = []
+    for j in data.get("jobs", []):
+        raw_name = j.get("company", "")
+        canonical = alias_map.get(raw_name.lower())
+        if not canonical and norm_alias_map:
+            canonical = norm_alias_map.get(normalize_company(raw_name))
+        if cfg.get("match_target_companies_only", True) and not canonical:
+            continue
+        out.append({
+            "id": f"interntracker:{j.get('id') or j.get('url')}",
+            "company": canonical or raw_name,
+            "title": j.get("title", ""),
+            "url": j.get("url", ""),
+            "location": j.get("location", "") or "",
+            "degrees": [],
+            # This feed is internship-only by scope (see its README), same
+            # reasoning as the Simplify internship repos.
+            "level_implied": cfg.get("level_implied", False),
+        })
     return out
 
 
@@ -515,6 +583,7 @@ def gather(cfg, verify=False):
     exclude_grad_years = filt.get("exclude_grad_years", [])
     us_only = filt.get("us_only", False)
     alias_map = build_alias_map(cfg["companies"])
+    norm_alias_map = build_normalized_alias_map(cfg["companies"])
 
     def keep(p):
         if not matches(p["title"], level_re, role_re, p.get("level_implied")):
@@ -557,10 +626,16 @@ def gather(cfg, verify=False):
             postings.extend(hits)
 
     if cfg.get("simplify", {}).get("enabled"):
-        sraw = fetch_simplify(cfg["simplify"], alias_map)
+        sraw = fetch_simplify(cfg["simplify"], alias_map, norm_alias_map)
         shits = [p for p in sraw if keep(p)]
         postings.extend(shits)
         report.append(("SimplifyJobs", "simplify", "ok", len(sraw), len(shits)))
+
+    if cfg.get("intern_tracker", {}).get("enabled"):
+        traw = fetch_intern_tracker(cfg["intern_tracker"], alias_map, norm_alias_map)
+        thits = [p for p in traw if keep(p)]
+        postings.extend(thits)
+        report.append(("InternTracker", "intern_tracker", "ok", len(traw), len(thits)))
 
     # de-dup by id
     seen_ids = {}
@@ -589,7 +664,8 @@ def collapse(postings):
         # A company's own ATS is the better link (aggregators go stale and
         # sometimes point at a search page), so it wins the group.
         winner = next((m for m in members
-                       if not m["id"].startswith("simplify:")), members[0])
+                       if not m["id"].startswith(("simplify:", "interntracker:"))),
+                      members[0])
         winner = dict(winner)
         winner["ids"] = sorted({m["id"] for m in members})
         out.append(winner)
@@ -670,6 +746,8 @@ def write_report(cfg, postings, report):
     L.append("\n## Aggregator feeds\n")
     for u in cfg["simplify"]["listings"]:
         L.append(f"- `{u}`\n")
+    if cfg.get("intern_tracker", {}).get("enabled"):
+        L.append(f"- `{cfg['intern_tracker']['url']}`\n")
 
     L.append(f"\n## Currently matching roles ({len(postings)})\n")
     for co in sorted(by_co):
