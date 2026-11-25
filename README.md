@@ -44,9 +44,9 @@ every 30 min (GitHub Actions cron)
 ## Setup
 
 1. **Install ntfy** on your phone (iOS App Store / Google Play / F-Droid).
-2. **Subscribe to a private topic.** Pick something unguessable, e.g.
-   `rish-jobs-8f3ka92mx`. Anyone who knows the topic can read it, so treat it
-   like a password.
+2. **Subscribe to a private topic.** Pick something unguessable, e.g. generate
+   one with `echo "jobs-$(openssl rand -hex 8)"`. Anyone who knows the topic can
+   read it, so treat it like a password.
 3. **Push this repo to GitHub** (private is fine, Actions works either way).
 4. **Add the topic as a secret:** repo → Settings → Secrets and variables →
    Actions → New repository secret → name `NTFY_TOPIC`, value your topic name.
